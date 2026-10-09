@@ -1,0 +1,7 @@
+{
+ "name":"flowproxy","version":"1.0.0","private":true,"type":"module","license":"MIT",
+ "engines":{"node":">=24"},
+ "scripts":{"install:deps":"npm ci","dev":"concurrently -k \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"","build":"tsc --noEmit && vite build && esbuild server/index.ts --platform=node --packages=external --format=esm --bundle --outfile=dist/server/index.js","start":"node dist/server/index.js","test":"vitest run","test:watch":"vitest","test:e2e":"playwright test","check":"tsc --noEmit","smoke":"tsx scripts/smoke.ts"},
+ "dependencies":{"cheerio":"^1.1.2","compression":"^1.8.1","express":"^5.1.0","express-rate-limit":"^8.1.0","helmet":"^8.1.0","ipaddr.js":"^2.2.0","lucide-react":"^0.468.0","postcss":"^8.5.6","postcss-value-parser":"^4.2.0","react":"^19.1.1","react-dom":"^19.1.1","sanitize-html":"^2.17.0","simple-icons":"^15.0.0","undici":"^7.16.0"},
+ "devDependencies":{"@playwright/test":"^1.56.0","@types/compression":"^1.8.1","@types/express":"^5.0.3","@types/node":"^24.0.0","@types/react":"^19.1.0","@types/react-dom":"^19.1.0","@types/sanitize-html":"^2.16.0","concurrently":"^9.2.0","esbuild":"^0.25.0","supertest":"^7.1.0","@types/supertest":"^6.0.3","tsx":"^4.20.0","typescript":"^5.9.0","vite":"^7.1.0","vitest":"^3.2.0"}
+}
