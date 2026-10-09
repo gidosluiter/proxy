@@ -2,6 +2,21 @@
 
 A fast mini-browser with a real server-side **public reading proxy** and honest direct-access shortcuts. React/TypeScript + Vite on the frontend; Express, Undici, Cheerio and sanitized HTML/CSS on the backend. No accounts, database, paid APIs or keys.
 
+## GitHub website
+
+The GitHub Pages edition is built for `https://gidosluiter.github.io/proxy/`. It uses hash navigation so Settings, Favorites and Recent pages survive reload under `/proxy/`. All assets stay inside the project path.
+
+GitHub Pages can only host static files. This edition therefore opens **all websites directly**, labels itself as direct-access mode, and does not send requests to a nonexistent proxy API. Custom shortcuts, favorites, local history, themes and search remain functional. The full Node deployment below still provides the genuine public-page proxy.
+
+The `Deploy GitHub Pages` workflow builds and tests the static edition, uploads the site artifact, and deploys it on pushes to `main`. In GitHub repository **Settings → Pages**, Source must be **GitHub Actions**. Activating this setting requires repository Pages permissions; the Codex integration may not have them. For a private repository, GitHub Pages also requires an eligible GitHub plan. Repository visibility is never changed automatically.
+
+```sh
+npm run build:pages
+npm run test:e2e:pages
+```
+
+The Pages browser tests serve the built site under `/proxy/` with no API and no server-side route fallback, and verify desktop/mobile navigation, asset paths, direct links, shortcuts and persistence.
+
 ## Run locally
 
 Use **Node.js 24 or newer**.

@@ -6,10 +6,19 @@ Validated in Codex Cloud on 9 October 2026. Live responses describe this instanc
 
 - `npm ci --cache /tmp/flowproxy-npm-cache --no-audit --no-fund`: clean frozen-lockfile reinstall succeeded.
 - `npm run build`: strict TypeScript, Vite production client and bundled Node backend succeeded.
-- `npm test`: 45 tests passed across policy, rewriting, HTTP integration, destinations and preferences.
+- `npm test`: 50 tests passed across policy, rewriting, HTTP integration, destinations, preferences and project-path routing.
 - `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e`: 14 tests passed against the production build, seven each at 1440×900 and 390×844. Includes actual dashboard/browser controls, tabs, custom shortcuts, persistence, theme/motion, friendly errors, tall-document scrolling, redirect/address/favorites synchronization, recent-page favorites and retained document state while editing the address.
 - `npm audit`: zero known advisories, including development dependencies, after updating Vitest to 5.0.3.
 - `git diff --check`: no whitespace errors.
+
+## GitHub Pages edition
+
+- `npm run build:pages`: strict TypeScript and the static production build succeeded with `/proxy/` asset URLs.
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e:pages`: six checks passed across desktop and mobile. The test server serves only static files under `/proxy/`, without an API or route fallback. Hash navigation, reload, theme persistence, direct destination links, custom shortcuts, favicon loading and accurate backend-limit messages were verified.
+- The normal Node build and all 14 normal browser tests also passed after the Pages changes.
+- Static mode sends no health/proxy API requests. Sensitive query/fragment parameters and login routes are excluded from automatically recorded direct-access history.
+
+Publication requires the repository owner to enable **Settings → Pages → Source: GitHub Actions**. The authenticated Codex integration can push commits and read Actions, but both reading and activating Pages returned HTTP 403, `Resource not accessible by integration`. At validation time, the intended public URL `https://gidosluiter.github.io/proxy/` returned HTTP 404. The repository remains private; a compatible GitHub plan is required for private-repository Pages hosting. A locally tested build is not evidence of a live deployment.
 
 The deterministic browser tests use controlled backend responses; they do not claim to validate third-party uptime. The backend HTTP suite separately runs the actual Express application and proxy engine against a controlled transport. Live checks below use the real outbound transport and upstream servers.
 

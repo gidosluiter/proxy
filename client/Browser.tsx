@@ -14,6 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import { classify } from "./destinations";
+import { STATIC_HOST } from "./routing";
 type Tab = { id: string; history: string[]; index: number; title: string };
 type Page = { url: string; title: string; html: string };
 const baseCSS = `:host{display:block;min-height:100%;color:#202124;background:#fff;font:16px/1.6 Georgia,serif}.fp-document{padding:28px 36px;overflow-wrap:anywhere;min-height:100%;box-sizing:border-box}a{color:#5146b8}img{max-width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{max-width:100%}*{box-sizing:border-box}`;
@@ -160,6 +161,13 @@ export function Browser({
       kind = classify(current);
     } catch (e) {
       setError((e as Error).message);
+      setLoading(false);
+      return;
+    }
+    if (STATIC_HOST) {
+      setError(
+        "GitHub Pages hosts the dashboard only. Open this website directly, or use the full Node deployment for proxy browsing.",
+      );
       setLoading(false);
       return;
     }
@@ -357,8 +365,9 @@ export function Browser({
       <div className="browser-notice">
         <ShieldCheck size={13} />
         <span>
-          Public reading mode · Scripts and forms removed · No login or session
-          forwarding
+          {STATIC_HOST
+            ? "Direct-access edition · GitHub Pages does not host the proxy backend"
+            : "Public reading mode · Scripts and forms removed · No login or session forwarding"}
         </span>
       </div>
       {loading && (
@@ -378,12 +387,14 @@ export function Browser({
             <h1>This page needs another route</h1>
             <p role="alert">{error}</p>
             <div className="error-actions">
-              <button
-                className="secondary-button"
-                onClick={() => setReload((x) => x + 1)}
-              >
-                <RotateCw size={16} /> Try again
-              </button>
+              {!STATIC_HOST && (
+                <button
+                  className="secondary-button"
+                  onClick={() => setReload((x) => x + 1)}
+                >
+                  <RotateCw size={16} /> Try again
+                </button>
+              )}
               {safeDirect && (
                 <a
                   className="primary-button"

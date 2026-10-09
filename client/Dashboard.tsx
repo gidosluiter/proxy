@@ -34,11 +34,15 @@ export function Dashboard({
   setPreferences,
   open,
   section = "home",
+  proxyAvailable = true,
+  onDirectVisited,
 }: {
   preferences: Preferences;
   setPreferences: (fn: (p: Preferences) => Preferences) => void;
   open: (text: string) => void;
   section?: string;
+  proxyAvailable?: boolean;
+  onDirectVisited?: (item: Destination) => void;
 }) {
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -138,8 +142,10 @@ export function Dashboard({
               ))}
             </datalist>
             <div className="search-note">
-              <ShieldCheck size={13} /> Public-page proxy · Searches open
-              DuckDuckGo directly
+              <ShieldCheck size={13} />{" "}
+              {proxyAvailable
+                ? "Public-page proxy · Searches open DuckDuckGo directly"
+                : "GitHub Pages · Websites and searches open directly"}
             </div>
           </section>
         </>
@@ -172,7 +178,7 @@ export function Dashboard({
         </div>
         <div className="app-grid">
           {cards.map((item) => {
-            const mode = classify(item.url).mode;
+            const mode = proxyAvailable ? classify(item.url).mode : "direct";
             return (
               <article className="app-card" key={item.id}>
                 <button
@@ -206,6 +212,7 @@ export function Dashboard({
                     className="card-main"
                     aria-label={`Open ${item.name} directly`}
                     href={item.url}
+                    onClick={() => onDirectVisited?.(item)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -220,6 +227,7 @@ export function Dashboard({
                   <a
                     className="card-direct"
                     href={item.url}
+                    onClick={() => onDirectVisited?.(item)}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Open ${item.name} directly`}
@@ -267,20 +275,33 @@ export function Dashboard({
           <div className="compatibility-note">
             <ShieldCheck size={18} />
             <p>
-              <strong>Right route, every time.</strong> Social apps open
-              directly for reliable sign-in, chat and video. The proxy is built
-              for public reading pages.
+              <strong>
+                {proxyAvailable
+                  ? "Right route, every time."
+                  : "You’re browsing the GitHub Pages edition."}
+              </strong>{" "}
+              {proxyAvailable
+                ? "Social apps open directly for reliable sign-in, chat and video. The proxy is built for public reading pages."
+                : "Websites open directly. The server-side proxy is available in the Node deployment; GitHub Pages hosts the dashboard only."}
             </p>
           </div>
           <div className="lower-grid">
             <section className="reading-panel">
               <div className="section-heading">
                 <div>
-                  <h2>Take the proxy for a spin</h2>
-                  <span>Public pages, without the extra scripts</span>
+                  <h2>
+                    {proxyAvailable
+                      ? "Take the proxy for a spin"
+                      : "Explore public pages"}
+                  </h2>
+                  <span>
+                    {proxyAvailable
+                      ? "Public pages, without the extra scripts"
+                      : "Official destinations · direct access"}
+                  </span>
                 </div>
                 <span className="pill">
-                  <span /> Proxy enabled
+                  <span /> {proxyAvailable ? "Proxy enabled" : "Direct access"}
                 </span>
               </div>
               <div className="reading-list">
@@ -329,7 +350,9 @@ export function Dashboard({
                   </span>
                   <h3>Your next discovery starts here</h3>
                   <p>
-                    Visit a public page through the proxy.
+                    {proxyAvailable
+                      ? "Visit a public page through the proxy."
+                      : "Open a website from your dashboard."}
                     <br />
                     Your recent destinations will appear here.
                   </p>
@@ -386,8 +409,9 @@ export function Dashboard({
                 />
               </label>
               <p className="form-note">
-                Approved public domains use the proxy. Other websites open
-                directly.
+                {proxyAvailable
+                  ? "Approved public domains use the proxy. Other websites open directly."
+                  : "Websites open directly on GitHub Pages."}
               </p>
               {error && (
                 <p className="error-text" role="alert">

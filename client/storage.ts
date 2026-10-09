@@ -7,6 +7,19 @@ export type Preferences = {
   shortcuts: Destination[];
   recent: Destination[];
 };
+function sensitiveParameters(target: URL) {
+  const sensitive = (key: string) =>
+    /password|token|secret|session|auth|code|key/i.test(key);
+  if ([...target.searchParams.keys()].some(sensitive)) return true;
+  const hash = decodeURIComponent(target.hash.slice(1));
+  const parameters = hash.includes("?")
+    ? hash.slice(hash.indexOf("?") + 1)
+    : hash;
+  return (
+    parameters.includes("=") &&
+    [...new URLSearchParams(parameters).keys()].some(sensitive)
+  );
+}
 export const STORAGE_KEY = "flowproxy.preferences.v1";
 export const DEFAULTS: Preferences = {
   theme: "dark",
@@ -29,11 +42,7 @@ function entries(value: unknown): Destination[] {
       )
         return [];
       const d = classify(x.url);
-      if (
-        d.mode === "search" ||
-        /password|token|secret|session|auth/i.test(new URL(d.url).search)
-      )
-        return [];
+      if (d.mode === "search" || sensitiveParameters(new URL(d.url))) return [];
       return [
         { id: x.id, name: x.name.slice(0, 60), url: d.url, color: "#a996ff" },
       ];
@@ -65,9 +74,28 @@ export function addRecent(
   p: Preferences,
   url: string,
   name: string,
+  includeDirect = false,
 ): Preferences {
   try {
-    if (!p.rememberHistory || classify(url).mode !== "proxy") return p;
+    const destination = classify(url);
+    const target = new URL(destination.url);
+    const fragment = decodeURIComponent(target.hash.slice(1));
+    if (
+      !p.rememberHistory ||
+      sensitiveParameters(target) ||
+      /(?:^|\/)(?:login|logout|signin|signup|sign-in|auth|oauth|account|session)(?:\/|$|\?)/i.test(
+        fragment,
+      ) ||
+      destination.mode === "search" ||
+      (!includeDirect && destination.mode !== "proxy") ||
+      /(?:^|\/)(?:login|logout|signin|signup|sign-in|auth|oauth|account|session)(?:\/|$|\?)/i.test(
+        decodeURIComponent(target.pathname),
+      ) ||
+      [...target.searchParams.keys()].some((k) =>
+        /password|token|secret|session|auth|code|key/i.test(k),
+      )
+    )
+      return p;
     const id = url;
     return {
       ...p,

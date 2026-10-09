@@ -16,7 +16,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "tsc --noEmit",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "build:pages": "tsc --noEmit && vite build --mode pages --base=/proxy/",
+    "test:e2e:pages": "playwright test --config playwright.pages.config.ts"
   },
   "dependencies": {
     "cheerio": "^1.1.2",

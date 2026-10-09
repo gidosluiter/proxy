@@ -41,3 +41,29 @@ it("preserves stable URL shortcut IDs longer than 100 characters", () => {
   );
   expect(p.shortcuts[0].id).toBe(p.favorites[0]);
 });
+it("records non-sensitive direct destinations only when explicitly enabled", () => {
+  expect(
+    addRecent(DEFAULTS, "https://web.whatsapp.com/", "WhatsApp").recent,
+  ).toHaveLength(0);
+  expect(
+    addRecent(DEFAULTS, "https://web.whatsapp.com/", "WhatsApp", true).recent[0]
+      .name,
+  ).toBe("WhatsApp");
+  expect(
+    addRecent(DEFAULTS, "https://example.com/login", "Login", true).recent,
+  ).toHaveLength(0);
+  expect(
+    addRecent(DEFAULTS, "https://example.com/?token=secret", "Token", true)
+      .recent,
+  ).toHaveLength(0);
+});
+it("does not persist sensitive fragments or encoded authentication paths in direct history", () => {
+  for (const url of [
+    "https://example.org/callback#access_token=secret",
+    "https://example.org/callback#?code=secret",
+    "https://example.com/sign-in",
+    "https://example.com/%6cogin",
+    "https://example.org/#/login",
+  ])
+    expect(addRecent(DEFAULTS, url, "Sensitive", true).recent).toHaveLength(0);
+});

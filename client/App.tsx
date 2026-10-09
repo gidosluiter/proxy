@@ -16,15 +16,16 @@ import { Dashboard } from "./Dashboard";
 import { Settings } from "./Settings";
 import { Browser } from "./Browser";
 import { classify } from "./destinations";
+import { STATIC_HOST, readRoute, routeHref, faviconURL } from "./routing";
 import { readPreferences, writePreferences, addRecent } from "./storage";
 export function App() {
   const [preferences, setPreferences] = useState(readPreferences);
-  const [path, setPath] = useState(location.pathname + location.search);
+  const [path, setPath] = useState(readRoute(location));
   const [online, setOnline] = useState<boolean | null>(null);
   const [menu, setMenu] = useState(false);
   const [toast, setToast] = useState("");
   const [browserURL, setBrowserURL] = useState<string | null>(() =>
-    new URLSearchParams(location.search).get("url"),
+    new URLSearchParams(readRoute(location).split("?")[1] || "").get("url"),
   );
   const section = path.startsWith("/settings")
     ? "settings"
@@ -36,21 +37,28 @@ export function App() {
           ? "browse"
           : "home";
   const navigate = (next: string, replace = false) => {
-    if (location.pathname + location.search !== next) {
-      if (replace) history.replaceState({}, "", next);
-      else history.pushState({}, "", next);
+    const href = routeHref(next);
+    if (readRoute(location) !== next) {
+      if (replace) history.replaceState({}, "", href);
+      else history.pushState({}, "", href);
     }
     setPath(next);
     setMenu(false);
   };
   useEffect(() => {
     const pop = () => {
-      setPath(location.pathname + location.search);
-      const u = new URLSearchParams(location.search).get("url");
+      setPath(readRoute(location));
+      const u = new URLSearchParams(
+        readRoute(location).split("?")[1] || "",
+      ).get("url");
       if (u) setBrowserURL(u);
     };
     window.addEventListener("popstate", pop);
-    return () => window.removeEventListener("popstate", pop);
+    window.addEventListener("hashchange", pop);
+    return () => {
+      window.removeEventListener("popstate", pop);
+      window.removeEventListener("hashchange", pop);
+    };
   }, []);
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme;
@@ -63,6 +71,7 @@ export function App() {
       );
   }, [preferences]);
   useEffect(() => {
+    if (STATIC_HOST) return;
     let disposed = false;
     const check = () =>
       fetch("/api/health")
@@ -118,12 +127,18 @@ export function App() {
   const open = (text: string) => {
     try {
       const d = classify(text);
-      if (d.mode !== "proxy") {
+      if (STATIC_HOST || d.mode !== "proxy") {
         window.open(d.url, "_blank", "noopener,noreferrer");
+        if (STATIC_HOST && d.mode !== "search")
+          setPreferences((p) =>
+            addRecent(p, d.url, new URL(d.url).hostname, true),
+          );
         setToast(
           d.mode === "search"
             ? "Search results open directly on DuckDuckGo."
-            : "This website opens directly for reliable interactive features.",
+            : STATIC_HOST
+              ? "Website opened directly. GitHub Pages does not run the proxy backend."
+              : "This website opens directly for reliable interactive features.",
         );
         return;
       }
@@ -142,14 +157,14 @@ export function App() {
     <div className="app-shell">
       <aside className={`sidebar ${menu ? "is-open" : ""}`}>
         <a
-          href="/"
+          href={routeHref("/")}
           className="brand"
           onClick={(e) => {
             e.preventDefault();
             navigate("/");
           }}
         >
-          <img src="/favicon.svg" alt="" />
+          <img src={faviconURL} alt="" />
           <span>
             Flow<span>Proxy</span>
           </span>
@@ -159,7 +174,7 @@ export function App() {
           {nav.map((item) => (
             <a
               key={item.id}
-              href={item.path}
+              href={routeHref(item.path)}
               className={`nav-item ${section === item.id ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
@@ -183,12 +198,14 @@ export function App() {
             </span>
             <strong>A simpler way to browse</strong>
             <p>
-              Public pages through the proxy.
+              {STATIC_HOST
+                ? "Your websites, directly."
+                : "Public pages through the proxy."}
               <br />
               Your apps, directly.
             </p>
             <a
-              href="/settings"
+              href={routeHref("/settings")}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/settings");
@@ -198,7 +215,7 @@ export function App() {
             </a>
           </div>
           <a
-            href="/settings"
+            href={routeHref("/settings")}
             className={`nav-item ${section === "settings" ? "active" : ""}`}
             onClick={(e) => {
               e.preventDefault();
@@ -208,7 +225,7 @@ export function App() {
             <SettingsIcon size={18} /> Settings
           </a>
           <div className="sidebar-version">
-            <img src="/favicon.svg" alt="" />
+            <img src={faviconURL} alt="" />
             <span>
               FlowProxy <small>v1.0 · Open source</small>
             </span>
@@ -255,11 +272,13 @@ export function App() {
               className={`connection ${online === true ? "connected" : online === false ? "disconnected" : ""}`}
             >
               <span />
-              {online === true
-                ? "Proxy online"
-                : online === false
-                  ? "Proxy offline"
-                  : "Connecting"}
+              {STATIC_HOST
+                ? "Direct access mode"
+                : online === true
+                  ? "Proxy online"
+                  : online === false
+                    ? "Proxy offline"
+                    : "Connecting"}
             </span>
             <span className="topbar-divider" />
             <button
@@ -296,6 +315,11 @@ export function App() {
             setPreferences={setPreferences}
             open={open}
             section={section}
+            proxyAvailable={!STATIC_HOST}
+            onDirectVisited={(item) => {
+              if (STATIC_HOST)
+                setPreferences((p) => addRecent(p, item.url, item.name, true));
+            }}
           />
         ) : null}
         {browserURL && (

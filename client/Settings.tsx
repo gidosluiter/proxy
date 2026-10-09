@@ -1,3 +1,4 @@
+import { STATIC_HOST } from "./routing";
 import { Moon, Sun, ShieldCheck, Trash2, ArrowUpRight } from "lucide-react";
 import { APPROVED } from "./destinations";
 import type { Preferences } from "./storage";
@@ -77,8 +78,18 @@ export function Settings({
         <h2>
           <ShieldCheck size={19} /> An honest proxy
         </h2>
+        {STATIC_HOST && (
+          <p>
+            <strong>GitHub Pages edition:</strong> this website hosts the
+            dashboard and opens destinations directly. GitHub Pages cannot run
+            the Node proxy backend. Deploy the full Node application to enable
+            public-page proxy browsing.
+          </p>
+        )}
         <p>
-          FlowProxy fetches public pages on the server, rewrites links and
+          {STATIC_HOST
+            ? "In the full Node deployment, FlowProxy fetches public pages on the server, rewrites links and"
+            : "FlowProxy fetches public pages on the server, rewrites links and"}
           assets, and removes scripts and forms. It is a reading proxy, not a
           full browser or an anonymity service. Websites still receive requests
           from the server.
@@ -89,15 +100,20 @@ export function Settings({
           sites in a new tab. Some public pages may look simpler or block proxy
           traffic.
         </p>
-        <h3>Approved public domains</h3>
+        <h3>
+          {STATIC_HOST
+            ? "Full Node deployment: approved proxy domains"
+            : "Approved public domains"}
+        </h3>
         <div className="domain-list">
           {APPROVED.map((x) => (
             <code key={x}>{x}</code>
           ))}
         </div>
         <p className="form-note">
-          Custom shortcuts do not expand the server allowlist. New destinations
-          require an administrator to update the server policy.
+          {STATIC_HOST
+            ? "These restrictions apply to the Node proxy. On this GitHub Pages site, custom shortcuts open directly."
+            : "Custom shortcuts do not expand the server allowlist. New destinations require an administrator to update the server policy."}
         </p>
         <a
           className="text-button"
