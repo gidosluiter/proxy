@@ -1,28 +1,406 @@
-import {useState} from 'react';
-import {ArrowUpRight,ArrowRight,Plus,Search,Star,Globe,Clock,ShieldCheck,Trash2,X} from 'lucide-react';
-import {SOCIALS,READING,classify,type Destination} from './destinations';
-import type {Preferences} from './storage';
-export function BrandIcon({item}:{item:Destination}){return <span className="app-icon" style={{'--brand':item.color} as React.CSSProperties}>{item.icon?<svg viewBox="0 0 24 24" aria-hidden="true"><path d={item.icon}/></svg>:<Globe size={25}/>}</span>;}
-export function Dashboard({preferences,setPreferences,open,section='home'}:{preferences:Preferences;setPreferences:(fn:(p:Preferences)=>Preferences)=>void;open:(text:string)=>void;section?:string}){
- const [query,setQuery]=useState('');const [adding,setAdding]=useState(false);const [name,setName]=useState('');const [url,setURL]=useState('');const [error,setError]=useState('');
- const all=[...SOCIALS,...preferences.shortcuts];
- const toggle=(id:string)=>setPreferences(p=>({...p,favorites:p.favorites.includes(id)?p.favorites.filter(x=>x!==id):[...p.favorites,id]}));
- const save=(e:React.FormEvent)=>{e.preventDefault();try{const target=classify(url);if(target.mode==='search')throw new Error('Use a website URL for your shortcut.');if(!name.trim())throw new Error('Give your shortcut a name.');setPreferences(p=>({...p,shortcuts:[...p.shortcuts,{id:crypto.randomUUID(),name:name.trim().slice(0,60),url:target.url,color:'#a996ff'}]}));setAdding(false);setName('');setURL('');setError('');}catch(e){setError((e as Error).message);}};
- const cards=section==='favorites'?all.filter(x=>preferences.favorites.includes(x.id)):section==='recent'?preferences.recent:all;
- return <div className="dashboard">
- {section==='home'?<><section className="hero"><div className="eyebrow"><span className="tiny-spark">✦</span> A little less friction. A lot more flow.</div><h1>Your internet. <span>In flow.</span></h1><p>Your favorite places, one starting point. Browse public pages or jump<br className="desktop-break"/> straight into the apps you love.</p>
- <form className="main-search" onSubmit={e=>{e.preventDefault();open(query);}}><Search size={22}/><input aria-label="Enter a URL or search" placeholder="Enter a website or search the web…" list="recent-destinations" value={query} onChange={e=>setQuery(e.target.value)}/><kbd>⌘ K</kbd><button type="submit" aria-label="Go"><ArrowRight size={21}/></button></form><datalist id="recent-destinations">{preferences.recent.map(x=><option key={x.id} value={x.url}>{x.name}</option>)}</datalist>
- <div className="search-note"><ShieldCheck size={13}/> Public-page proxy · Searches open DuckDuckGo directly</div></section></>:<section className="collection-hero"><div className="eyebrow">YOUR SPACE</div><h1>{section==='favorites'?'Favorites':'Recently visited'}</h1><p>{section==='favorites'?'The destinations you keep coming back to.':'Your public browsing history stays on this device.'}</p></section>}
- <section><div className="section-heading"><div><h2>{section==='home'?'Quick access':section==='favorites'?'Saved destinations':'Your history'}</h2>{section==='home'&&<span>Your everyday essentials</span>}</div><button className="text-button" onClick={()=>setAdding(true)}><Plus size={16}/> Add shortcut</button></div>
- <div className="app-grid">{cards.map(item=>{const mode=classify(item.url).mode;return <article className="app-card" key={item.id}>
- <button className={`favorite-button ${preferences.favorites.includes(item.id)?'is-favorite':''}`} aria-label={`${preferences.favorites.includes(item.id)?'Unfavorite':'Favorite'} ${item.name}`} onClick={()=>toggle(item.id)}><Star size={14} fill={preferences.favorites.includes(item.id)?'currentColor':'none'}/></button>
- {mode==='proxy'?<button className="card-main" aria-label={`Browse ${item.name}`} onClick={()=>open(item.url)}><BrandIcon item={item}/><strong>{item.name}</strong><span className="card-mode proxy-mode"><span/> Proxy reading</span></button>:<a className="card-main" aria-label={`Open ${item.name} directly`} href={item.url} target="_blank" rel="noopener noreferrer"><BrandIcon item={item}/><strong>{item.name}</strong><span className="card-mode">Direct access <ArrowUpRight size={12}/></span></a>}
- {mode==='proxy'&&<a className="card-direct" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${item.name} directly`}><ArrowUpRight size={13}/></a>}
- {preferences.shortcuts.some(x=>x.id===item.id)&&<button className="remove-shortcut" aria-label={`Remove ${item.name}`} onClick={()=>setPreferences(p=>({...p,shortcuts:p.shortcuts.filter(x=>x.id!==item.id),favorites:p.favorites.filter(x=>x!==item.id)}))}><Trash2 size={12}/></button>}
- </article>;})}</div>{!cards.length&&<div className="empty-state"><Star/><h3>{section==='favorites'?'Make room for your favorites':'A fresh start'}</h3><p>{section==='favorites'?'Tap the star on any quick-access card to save it here.':'Public pages you browse will appear here.'}</p></div>}
- </section>
- {section==='home'&&<><div className="compatibility-note"><ShieldCheck size={18}/><p><strong>Right route, every time.</strong> Social apps open directly for reliable sign-in, chat and video. The proxy is built for public reading pages.</p></div><div className="lower-grid"><section className="reading-panel"><div className="section-heading"><div><h2>Take the proxy for a spin</h2><span>Public pages, without the extra scripts</span></div><span className="pill"><span/> Proxy enabled</span></div><div className="reading-list">{READING.map(item=><button key={item.id} className="reading-row" onClick={()=>open(item.url)}><BrandIcon item={item}/><span><strong>{item.name}</strong><small>{item.description}</small></span><ArrowRight size={16}/></button>)}</div></section><section className="recent-panel"><div className="section-heading"><h2>Recently visited</h2><Clock size={16}/></div>{preferences.recent.length?<div className="recent-list">{preferences.recent.slice(0,4).map(item=><button className="reading-row" key={item.id} onClick={()=>open(item.url)}><Globe size={19}/><span><strong>{item.name}</strong><small>{new URL(item.url).hostname}</small></span><ArrowUpRight size={15}/></button>)}</div>:<div className="empty-recent"><span className="empty-globe"><Globe size={28}/></span><h3>Your next discovery starts here</h3><p>Visit a public page through the proxy.<br/>Your recent destinations will appear here.</p></div>}<div className="local-note"><ShieldCheck size={13}/> Stored on your device. Always yours.</div></section></div></>}
- <footer><span>FlowProxy · A clearer path to the web</span><span>No accounts. No tracking. Just flow.</span></footer>
- {adding&&<div className="modal-backdrop" onClick={()=>setAdding(false)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-heading" onClick={e=>e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close shortcut dialog" onClick={()=>setAdding(false)}><X size={20}/></button><h2 id="shortcut-heading">A new place to go</h2><p>Add a shortcut to your personal dashboard.</p><form onSubmit={save}><label>Shortcut name<input autoFocus maxLength={60} value={name} onChange={e=>setName(e.target.value)} placeholder="My favorite website" required/></label><label>Shortcut URL<input value={url} onChange={e=>setURL(e.target.value)} placeholder="https://example.com" required/></label><p className="form-note">Approved public domains use the proxy. Other websites open directly.</p>{error&&<p className="error-text" role="alert">{error}</p>}<button className="primary-button" type="submit">Save shortcut <ArrowRight size={16}/></button></form></section></div>}
- </div>;
+import { useState } from "react";
+import {
+  ArrowUpRight,
+  ArrowRight,
+  Plus,
+  Search,
+  Star,
+  Globe,
+  Clock,
+  ShieldCheck,
+  Trash2,
+  X,
+} from "lucide-react";
+import { SOCIALS, READING, classify, type Destination } from "./destinations";
+import type { Preferences } from "./storage";
+export function BrandIcon({ item }: { item: Destination }) {
+  return (
+    <span
+      className="app-icon"
+      style={{ "--brand": item.color } as React.CSSProperties}
+    >
+      {item.icon ? (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d={item.icon} />
+        </svg>
+      ) : (
+        <Globe size={25} />
+      )}
+    </span>
+  );
+}
+export function Dashboard({
+  preferences,
+  setPreferences,
+  open,
+  section = "home",
+}: {
+  preferences: Preferences;
+  setPreferences: (fn: (p: Preferences) => Preferences) => void;
+  open: (text: string) => void;
+  section?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [url, setURL] = useState("");
+  const [error, setError] = useState("");
+  const all = [...SOCIALS, ...preferences.shortcuts];
+  const toggle = (item: Destination) =>
+    setPreferences((p) => {
+      const exists = p.favorites.includes(item.id);
+      return {
+        ...p,
+        favorites: exists
+          ? p.favorites.filter((x) => x !== item.id)
+          : [...p.favorites, item.id],
+        shortcuts:
+          !exists && !all.some((x) => x.id === item.id)
+            ? [...p.shortcuts, item]
+            : p.shortcuts,
+      };
+    });
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const target = classify(url);
+      if (target.mode === "search")
+        throw new Error("Use a website URL for your shortcut.");
+      if (!name.trim()) throw new Error("Give your shortcut a name.");
+      setPreferences((p) => ({
+        ...p,
+        shortcuts: [
+          ...p.shortcuts,
+          {
+            id: crypto.randomUUID(),
+            name: name.trim().slice(0, 60),
+            url: target.url,
+            color: "#a996ff",
+          },
+        ],
+      }));
+      setAdding(false);
+      setName("");
+      setURL("");
+      setError("");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+  const cards =
+    section === "favorites"
+      ? all.filter((x) => preferences.favorites.includes(x.id))
+      : section === "recent"
+        ? preferences.recent
+        : all;
+  return (
+    <div className="dashboard">
+      {section === "home" ? (
+        <>
+          <section className="hero">
+            <div className="eyebrow">
+              <span className="tiny-spark">✦</span> A little less friction. A
+              lot more flow.
+            </div>
+            <h1>
+              Your internet. <span>In flow.</span>
+            </h1>
+            <p>
+              Your favorite places, one starting point. Browse public pages or
+              jump
+              <br className="desktop-break" /> straight into the apps you love.
+            </p>
+            <form
+              className="main-search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                open(query);
+              }}
+            >
+              <Search size={22} />
+              <input
+                aria-label="Enter a URL or search"
+                placeholder="Enter a website or search the web…"
+                list="recent-destinations"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <kbd>⌘ K</kbd>
+              <button type="submit" aria-label="Go">
+                <ArrowRight size={21} />
+              </button>
+            </form>
+            <datalist id="recent-destinations">
+              {preferences.recent.map((x) => (
+                <option key={x.id} value={x.url}>
+                  {x.name}
+                </option>
+              ))}
+            </datalist>
+            <div className="search-note">
+              <ShieldCheck size={13} /> Public-page proxy · Searches open
+              DuckDuckGo directly
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="collection-hero">
+          <div className="eyebrow">YOUR SPACE</div>
+          <h1>{section === "favorites" ? "Favorites" : "Recently visited"}</h1>
+          <p>
+            {section === "favorites"
+              ? "The destinations you keep coming back to."
+              : "Your public browsing history stays on this device."}
+          </p>
+        </section>
+      )}
+      <section>
+        <div className="section-heading">
+          <div>
+            <h2>
+              {section === "home"
+                ? "Quick access"
+                : section === "favorites"
+                  ? "Saved destinations"
+                  : "Your history"}
+            </h2>
+            {section === "home" && <span>Your everyday essentials</span>}
+          </div>
+          <button className="text-button" onClick={() => setAdding(true)}>
+            <Plus size={16} /> Add shortcut
+          </button>
+        </div>
+        <div className="app-grid">
+          {cards.map((item) => {
+            const mode = classify(item.url).mode;
+            return (
+              <article className="app-card" key={item.id}>
+                <button
+                  className={`favorite-button ${preferences.favorites.includes(item.id) ? "is-favorite" : ""}`}
+                  aria-label={`${preferences.favorites.includes(item.id) ? "Unfavorite" : "Favorite"} ${item.name}`}
+                  onClick={() => toggle(item)}
+                >
+                  <Star
+                    size={14}
+                    fill={
+                      preferences.favorites.includes(item.id)
+                        ? "currentColor"
+                        : "none"
+                    }
+                  />
+                </button>
+                {mode === "proxy" ? (
+                  <button
+                    className="card-main"
+                    aria-label={`Browse ${item.name}`}
+                    onClick={() => open(item.url)}
+                  >
+                    <BrandIcon item={item} />
+                    <strong>{item.name}</strong>
+                    <span className="card-mode proxy-mode">
+                      <span /> Proxy reading
+                    </span>
+                  </button>
+                ) : (
+                  <a
+                    className="card-main"
+                    aria-label={`Open ${item.name} directly`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <BrandIcon item={item} />
+                    <strong>{item.name}</strong>
+                    <span className="card-mode">
+                      Direct access <ArrowUpRight size={12} />
+                    </span>
+                  </a>
+                )}
+                {mode === "proxy" && (
+                  <a
+                    className="card-direct"
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${item.name} directly`}
+                  >
+                    <ArrowUpRight size={13} />
+                  </a>
+                )}
+                {preferences.shortcuts.some((x) => x.id === item.id) && (
+                  <button
+                    className="remove-shortcut"
+                    aria-label={`Remove ${item.name}`}
+                    onClick={() =>
+                      setPreferences((p) => ({
+                        ...p,
+                        shortcuts: p.shortcuts.filter((x) => x.id !== item.id),
+                        favorites: p.favorites.filter((x) => x !== item.id),
+                      }))
+                    }
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        {!cards.length && (
+          <div className="empty-state">
+            <Star />
+            <h3>
+              {section === "favorites"
+                ? "Make room for your favorites"
+                : "A fresh start"}
+            </h3>
+            <p>
+              {section === "favorites"
+                ? "Tap the star on any quick-access card to save it here."
+                : "Public pages you browse will appear here."}
+            </p>
+          </div>
+        )}
+      </section>
+      {section === "home" && (
+        <>
+          <div className="compatibility-note">
+            <ShieldCheck size={18} />
+            <p>
+              <strong>Right route, every time.</strong> Social apps open
+              directly for reliable sign-in, chat and video. The proxy is built
+              for public reading pages.
+            </p>
+          </div>
+          <div className="lower-grid">
+            <section className="reading-panel">
+              <div className="section-heading">
+                <div>
+                  <h2>Take the proxy for a spin</h2>
+                  <span>Public pages, without the extra scripts</span>
+                </div>
+                <span className="pill">
+                  <span /> Proxy enabled
+                </span>
+              </div>
+              <div className="reading-list">
+                {READING.map((item) => (
+                  <button
+                    key={item.id}
+                    className="reading-row"
+                    onClick={() => open(item.url)}
+                  >
+                    <BrandIcon item={item} />
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>{item.description}</small>
+                    </span>
+                    <ArrowRight size={16} />
+                  </button>
+                ))}
+              </div>
+            </section>
+            <section className="recent-panel">
+              <div className="section-heading">
+                <h2>Recently visited</h2>
+                <Clock size={16} />
+              </div>
+              {preferences.recent.length ? (
+                <div className="recent-list">
+                  {preferences.recent.slice(0, 4).map((item) => (
+                    <button
+                      className="reading-row"
+                      key={item.id}
+                      onClick={() => open(item.url)}
+                    >
+                      <Globe size={19} />
+                      <span>
+                        <strong>{item.name}</strong>
+                        <small>{new URL(item.url).hostname}</small>
+                      </span>
+                      <ArrowUpRight size={15} />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-recent">
+                  <span className="empty-globe">
+                    <Globe size={28} />
+                  </span>
+                  <h3>Your next discovery starts here</h3>
+                  <p>
+                    Visit a public page through the proxy.
+                    <br />
+                    Your recent destinations will appear here.
+                  </p>
+                </div>
+              )}
+              <div className="local-note">
+                <ShieldCheck size={13} /> Stored on your device. Always yours.
+              </div>
+            </section>
+          </div>
+        </>
+      )}
+      <footer>
+        <span>FlowProxy · A clearer path to the web</span>
+        <span>No accounts. No tracking. Just flow.</span>
+      </footer>
+      {adding && (
+        <div className="modal-backdrop" onClick={() => setAdding(false)}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shortcut-heading"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close icon-button"
+              aria-label="Close shortcut dialog"
+              onClick={() => setAdding(false)}
+            >
+              <X size={20} />
+            </button>
+            <h2 id="shortcut-heading">A new place to go</h2>
+            <p>Add a shortcut to your personal dashboard.</p>
+            <form onSubmit={save}>
+              <label>
+                Shortcut name
+                <input
+                  autoFocus
+                  maxLength={60}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="My favorite website"
+                  required
+                />
+              </label>
+              <label>
+                Shortcut URL
+                <input
+                  value={url}
+                  onChange={(e) => setURL(e.target.value)}
+                  placeholder="https://example.com"
+                  required
+                />
+              </label>
+              <p className="form-note">
+                Approved public domains use the proxy. Other websites open
+                directly.
+              </p>
+              {error && (
+                <p className="error-text" role="alert">
+                  {error}
+                </p>
+              )}
+              <button className="primary-button" type="submit">
+                Save shortcut <ArrowRight size={16} />
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
+    </div>
+  );
 }
