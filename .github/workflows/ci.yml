@@ -3,6 +3,8 @@ on:
   push:
     branches: [main, work]
   pull_request:
+env:
+  ONNXRUNTIME_NODE_INSTALL: skip
 permissions:
   contents: read
 jobs:

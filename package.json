@@ -1,5 +1,5 @@
 {
-  "name": "flowproxy",
+  "name": "flowchat",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -8,19 +8,21 @@
     "node": ">=24"
   },
   "scripts": {
-    "install:deps": "npm ci",
+    "install:deps": "node scripts/install-deps.mjs",
     "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
-    "build": "tsc --noEmit && vite build && esbuild server/index.ts --platform=node --packages=external --format=esm --bundle --outfile=dist/server/index.js",
+    "build": "node scripts/copy-runtime.mjs && tsc --noEmit && vite build && esbuild server/index.ts --platform=node --packages=external --format=esm --bundle --outfile=dist/server/index.js",
     "start": "node dist/server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "tsc --noEmit",
     "smoke": "tsx scripts/smoke.ts",
-    "build:pages": "tsc --noEmit && vite build --mode pages --base=/proxy/",
-    "test:e2e:pages": "playwright test --config playwright.pages.config.ts"
+    "build:pages": "node scripts/copy-runtime.mjs && tsc --noEmit && vite build --mode pages --base=/proxy/",
+    "test:e2e:pages": "playwright test --config playwright.pages.config.ts",
+    "predev": "node scripts/copy-runtime.mjs"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
     "cheerio": "^1.1.2",
     "compression": "^1.8.1",
     "express": "^5.1.0",
@@ -32,6 +34,8 @@
     "postcss-value-parser": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sanitize-html": "^2.17.0",
     "simple-icons": "^15.0.0",
     "undici": "^7.16.0"

@@ -7,13 +7,15 @@ export function readRoute(
     ? location.hash.startsWith("#/")
       ? location.hash.slice(1)
       : "/"
-    : location.pathname + location.search;
+    : (location.pathname.startsWith("/legacy")
+        ? location.pathname.slice(7) || "/"
+        : location.pathname) + location.search;
 }
 export function routeHref(
   route: string,
   staticHost = STATIC_HOST,
-  base = import.meta.env.BASE_URL,
+  base = import.meta.env.BASE_URL + "legacy/",
 ) {
-  return staticHost ? `${base}#${route}` : route;
+  return staticHost ? `${base}#${route}` : `${base.replace(/\/$/, "")}${route}`;
 }
 export const faviconURL = `${import.meta.env.BASE_URL}favicon.svg`;

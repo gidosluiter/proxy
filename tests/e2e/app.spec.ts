@@ -19,7 +19,7 @@ test.beforeEach(async ({ page }) => {
 test("dashboard, proxy navigation, tabs and browser controls work", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/legacy/");
   await expect(
     page.getByRole("heading", { name: "Your internet. In flow." }),
   ).toBeVisible();
@@ -63,7 +63,7 @@ test("dashboard, proxy navigation, tabs and browser controls work", async ({
 test("social links are honest and custom shortcuts persist", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/legacy/");
   const chat = page.getByRole("link", {
     name: "Open WhatsApp directly",
     exact: true,
@@ -85,14 +85,14 @@ test("social links are honest and custom shortcuts persist", async ({
   ).toBeVisible();
 });
 test("settings, error fallback and mobile layout work", async ({ page }) => {
-  await page.goto("/settings");
+  await page.goto("/legacy/settings");
   await page.getByRole("button", { name: "Light theme", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await page.getByLabel("Reduce motion").check();
   await page.reload();
   await expect(page.getByLabel("Reduce motion")).toBeChecked();
   await page.goto(
-    "/browse?url=" + encodeURIComponent("https://example.com/fail"),
+    "/legacy/browse?url=" + encodeURIComponent("https://example.com/fail"),
   );
   await expect(
     page.getByRole("heading", { name: "This page needs another route" }),
@@ -121,7 +121,7 @@ test("long public documents can scroll to the bottom", async ({ page }) => {
       },
     }),
   );
-  await page.goto("/browse?url=" + encodeURIComponent("https://example.com/"));
+  await page.goto("/legacy/browse?url=" + encodeURIComponent("https://example.com/"));
   const bottom = page
     .locator("public-document")
     .getByRole("link", { name: "Document bottom" });
@@ -143,7 +143,7 @@ test("redirects synchronize address, route and favorite state without extra requ
     });
   });
   await page.goto(
-    "/browse?url=" + encodeURIComponent("https://example.com/redirect"),
+    "/legacy/browse?url=" + encodeURIComponent("https://example.com/redirect"),
   );
   await expect(
     page
@@ -165,17 +165,17 @@ test("redirects synchronize address, route and favorite state without extra requ
 test("favoriting a recent public page keeps it available in Favorites", async ({
   page,
 }) => {
-  await page.goto("/browse?url=" + encodeURIComponent("https://example.com/"));
+  await page.goto("/legacy/browse?url=" + encodeURIComponent("https://example.com/"));
   await expect(
     page
       .locator("public-document")
       .getByRole("heading", { name: "Example Domain" }),
   ).toBeVisible();
-  await page.goto("/recent");
+  await page.goto("/legacy/recent");
   await page
     .getByRole("button", { name: "Favorite Example Domain", exact: true })
     .click();
-  await page.goto("/favorites");
+  await page.goto("/legacy/favorites");
   await expect(
     page.getByRole("button", { name: "Browse Example Domain", exact: true }),
   ).toBeVisible();
@@ -196,7 +196,7 @@ test("editing the address preserves the current document state", async ({
       },
     }),
   );
-  await page.goto("/browse?url=" + encodeURIComponent("https://example.com/"));
+  await page.goto("/legacy/browse?url=" + encodeURIComponent("https://example.com/"));
   await page.locator("public-document").getByText("More information").click();
   await page.getByLabel("Browser address").fill("https://example.com/next");
   await expect(

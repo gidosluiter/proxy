@@ -9,14 +9,19 @@ const types = {
   ".css": "text/css",
   ".svg": "image/svg+xml",
   ".json": "application/json",
+  ".mjs": "text/javascript",
+  ".wasm": "application/wasm",
 };
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     if (!url.pathname.startsWith("/proxy/")) throw new Error("Not found");
+    const requested = url.pathname.endsWith("/")
+      ? url.pathname + "index.html"
+      : url.pathname;
     const path = resolve(
       root,
-      decodeURIComponent(url.pathname.slice("/proxy/".length)) || "index.html",
+      decodeURIComponent(requested.slice("/proxy/".length)) || "index.html",
     );
     if (!path.startsWith(root + sep)) throw new Error("Not found");
     const body = await readFile(path);

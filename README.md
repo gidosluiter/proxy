@@ -1,97 +1,55 @@
-# FlowProxy
+# FlowChat
 
-A fast mini-browser with a real server-side **public reading proxy** and honest direct-access shortcuts. React/TypeScript + Vite on the frontend; Express, Undici, Cheerio and sanitized HTML/CSS on the backend. No accounts, database, paid APIs or keys.
+Een gratis AI-chatwebsite met echte lokale inferentie: React, TypeScript en Transformers.js draaien **Qwen2.5-0.5B-Instruct** in een aparte browserworker. Geen account, API-sleutel, AI-server of betaalde dienst. Dit is een open model, geen OpenAI GPT of ChatGPT.
 
-## GitHub website
+Websiteadres: https://gidosluiter.github.io/proxy/
 
-The GitHub Pages edition is built for `https://gidosluiter.github.io/proxy/`. It uses hash navigation so Settings, Favorites and Recent pages survive reload under `/proxy/`. All assets stay inside the project path.
+## Gebruik
 
-GitHub Pages can only host static files. This edition therefore opens **all websites directly**, labels itself as direct-access mode, and does not send requests to a nonexistent proxy API. Custom shortcuts, favorites, local history, themes and search remain functional. The full Node deployment below still provides the genuine public-page proxy.
+Open de website in een recente browser en schrijf je eerste vraag. Het model wordt dan gedownload, of gebruik **Download AI-model** vooraf. De eerste download is ongeveer **520 MB inclusief tokenizer**; de WASM-runtime is circa 27 MB. Gebruik bij voorkeur een moderne computer met voldoende vrij geheugen. Antwoorden kunnen op oudere apparaten traag zijn. De desktop-inferentie is afzonderlijk gecontroleerd; mobiele UI-tests garanderen geen geschikte hardware voor het model.
 
-The `Deploy GitHub Pages` workflow builds and tests the static edition, uploads the site artifact, and deploys it on pushes to `main`. In GitHub repository **Settings → Pages**, Source must be **GitHub Actions**. Activating this setting requires repository Pages permissions; the Codex integration may not have them. For a private repository, GitHub Pages also requires an eligible GitHub plan. Repository visibility is never changed automatically.
+Antwoorden verschijnen tijdens het genereren. **Stop** onderbreekt ook downloaden en initialisatie. Nieuw gesprek, gesprekken wisselen, opnieuw genereren, hernoemen, verwijderen, thema's, kopiëren en JSON-export zijn beschikbaar. Maximaal 20 gesprekken met 60 berichten per gesprek; input is beperkt tot 2000 tekens en modelcontext is begrensd. Het kleine model kan fouten maken, heeft geen live internetkennis en geeft geen garantie op Nederlands taalniveau.
 
-```sh
-npm run build:pages
-npm run test:e2e:pages
-```
+Je berichten blijven op je apparaat. Modelbestanden worden bij de eerste start opgehaald bij Hugging Face, die je IP-adres bij die download kan zien. Wijzigingen in een ander tabblad synchroniseren de geschiedenis en stoppen een lopend antwoord. Gesprekken staan in lokale browseropslag; exporteer belangrijke informatie. Modelbestanden gebruiken de browsercache. De browser kan deze cache verwijderen als ruimte nodig is; dan volgt opnieuw een download. Wis sitegegevens via je browser om zowel gesprekken als modelcache te verwijderen.
 
-The Pages browser tests serve the built site under `/proxy/` with no API and no server-side route fallback, and verify desktop/mobile navigation, asset paths, direct links, shortcuts and persistence.
+## Ontwikkelen en draaien
 
-## Run locally
-
-Use **Node.js 24 or newer**.
+Node.js **24 of nieuwer**.
 
 ```sh
-npm ci
+npm run install:deps
 npm run dev
 ```
 
-The Vite frontend runs on port 5173; it sends `/api` requests to the Express backend on port 3000. For production:
+De install-helper voert een normale `npm ci` uit met `ONNXRUNTIME_NODE_INSTALL=skip`: deze browserapp heeft geen optionele native GPU-onderdelen nodig. De lockfile en pakketintegriteitscontroles blijven van kracht. Voor een handmatige installatie op Linux: `ONNXRUNTIME_NODE_INSTALL=skip npm ci`.
+
+Vite draait op 5173; Express op 3000. De chat heeft geen backend-API nodig. De behouden oorspronkelijke proxy staat op `/legacy/` en gebruikt `/api/` op de Node-server.
 
 ```sh
 npm run build
 npm start
-```
-
-The production server serves both the built frontend and API on `PORT` (default 3000). Always run commands from the repository root. `npm install` installs dependencies normally; `npm run install:deps` refreshes them from the frozen lockfile. No global packages are required.
-
-## What actually works
-
-The proxy fetches pages **on the server**, resolves relative URLs, validates each redirect, rewrites links/images/styles/fonts and renders sanitized markup inside a Shadow DOM. There is **no iframe** and browsing is not replaced by a set of bookmarks. Back, forward, refresh, address editing and up to eight browser tabs work within FlowProxy. Tabs are temporary; favorite shortcuts, custom shortcuts, theme, reduced motion and recent public destinations are stored locally.
-
-| Destination                                  | Route         | Verified scope                                             |
-| -------------------------------------------- | ------------- | ---------------------------------------------------------- |
-| Example.com                                  | Proxy         | Public HTML page and rewritten link                        |
-| CERN first website (HTTPS)                   | Proxy         | Public document and internal navigation                    |
-| W3C                                          | Proxy         | Public HTML and permitted styles/images                    |
-| Wikipedia                                    | Proxy reading | Public articles; dynamic widgets removed                   |
-| MDN                                          | Proxy reading | Public documentation; interactive examples removed         |
-| GitHub                                       | Proxy reading | Public HTML only; sign-in/editor/actions use direct access |
-| Snapchat, WhatsApp, TikTok, Instagram        | Direct        | Official web destinations, new tab                         |
-| YouTube, Discord, Reddit, X, Twitch, Spotify | Direct        | Official web destinations, new tab                         |
-| Other destinations                           | Direct        | Custom shortcuts cannot expand the server allowlist        |
-| Ordinary searches                            | Direct        | DuckDuckGo search results, new tab                         |
-
-Live availability and assets depend on the deployment network and upstream rules. See [validation evidence](docs/validation.md) for the checks actually performed. This is not JavaScript application emulation: upstream scripts, forms, embeds and inline SVG are removed. Logins, cookies, CAPTCHA, uploads, WebSockets, service workers, video/audio streaming and DRM are unsupported. External assets load only from explicitly approved hosts; some pages look simpler. A useful error state offers retry and direct access. No claim is made that the direct social apps' authenticated flows were tested with user accounts.
-
-## Security and privacy
-
-- Exact hostname allowlist in `server/policy.ts`. Only HTTP/HTTPS standard ports, no URL credentials. Authentication paths and sensitive query keys are rejected.
-- Direct mode validates **all** DNS answers, rejects non-public IPv4/IPv6 and pins the public address used by the connection while preserving TLS verification. Redirects undergo the same checks; five-hop maximum.
-- No cookies, authorization, forwarded browser headers or server secrets sent upstream. Response cookies are discarded. GET/HEAD only; no form submissions or password inputs.
-- Sanitized upstream HTML; rewritten CSS; isolated rendering and a restrictive application CSP. Scripts, forms, frames, dangerous schemes and event handlers are removed. Untrusted pages cannot overlay the application controls.
-- 15-second network deadline, 3 MiB decompressed response limit, at most 24 simultaneous fetches, 150 API requests per IP/minute. The application does not trust `X-Forwarded-For`; when deployed behind a reverse proxy its rate limit may be shared, which is deliberately conservative.
-- Connection pooling, compression and streamed image/font responses. Bounded 8 MiB/64-entry in-memory cache only for small explicitly public static resources without query strings, `Set-Cookie`, `Vary`, private/no-store/no-cache. HTML and user-specific content are never shared-cached.
-- No browsing request logs or tracking scripts. Public browsing history stays on your device and can be disabled/cleared. Local storage is not encrypted; avoid sensitive URLs. Your server and network operator can still observe traffic: this is not an anonymity service.
-
-### Managed cloud egress
-
-Codex Cloud may supply an HTTPS egress proxy while direct DNS is unavailable. In that environment only, start with `FLOWPROXY_TRUST_EGRESS=1`; the app uses the injected `HTTPS_PROXY`/`HTTP_PROXY` gateway without printing its value. **That gateway must enforce public-only DNS/connection policy.** Local IP pinning cannot cross a CONNECT gateway; this is an explicit infrastructure trust boundary, not equivalent to direct-mode pinning. Default deployments leave this option unset and use pinned DNS. Never enable it for an untrusted arbitrary proxy. TLS verification remains enabled in both modes.
-
-Required outbound domains: `example.com`, `info.cern.ch`, `www.w3.org`, `w3.org`, `www.wikipedia.org`, `en.wikipedia.org`, `upload.wikimedia.org`, `developer.mozilla.org`, `github.com`, `raw.githubusercontent.com`. Add destinations deliberately on the backend **and** in the frontend catalog; never use a wildcard. Package installation uses the npm registry. Social direct-access links require only the user's browser network.
-
-## Tests and automation
-
-```sh
-npm test                 # Vitest policy, rewriting, HTTP integration, preferences
-npm run check            # Strict TypeScript
-npm run build            # TypeScript + frontend + server build
+npm test
 npx playwright install chromium
-npm run test:e2e          # Real desktop/mobile UI, controlled public-page fixture
-npm run smoke            # Real upstream checks; requires a running backend
+npm run test:e2e
+npm run build:pages
+npm run test:e2e:pages
 ```
 
-To use system Chromium set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`. For a server on a different port set `FLOWPROXY_SMOKE_BASE` to its local origin. The live smoke test reports each upstream separately and fails if none load; deterministic CI does not depend on third-party uptime. GitHub Actions installs from the lockfile, builds, runs all unit/integration and desktop/mobile browser tests. Browser fixtures exercise frontend navigation; HTTP tests independently exercise the real backend with controlled upstream responses. Live smoke checks exercise the real outbound transport.
+De build kopieert bijpassende ONNX WASM-runtimebestanden uit de vergrendelde dependency naar de gegenereerde `public/runtime/`-map. Het model en de runtime gebruiken single-threaded WASM; WebGPU, SharedArrayBuffer en COOP/COEP zijn niet vereist. Berichten worden als veilige Markdown weergegeven; remote afbeeldingen en ruwe HTML worden niet uitgevoerd. De Node-server houdt een CSP met exacte modelhosts en WASM-toestemming.
 
-## Deploy
+## GitHub Pages
 
-Use a host that runs a persistent Node server, with outbound HTTPS and public DNS. Static-only hosting (such as GitHub Pages) cannot run the backend.
+De `Deploy GitHub Pages` workflow installeert dependencies, voert de unit- en desktop/mobiele Pages-tests uit, uploadt het gebouwde artifact en publiceert wijzigingen op `main`. Project-assets blijven onder `/proxy/`. **Settings → Pages → Source moet GitHub Actions zijn.** De Codex-integratie mag deze beheerinstelling mogelijk niet wijzigen; alleen een eigenaar kan die dan opslaan. Een workflow in de repository alleen activeert Pages niet.
+
+De chat draait volledig in de browser en werkt op statische hosting. De oorspronkelijke [FlowProxy](docs/legacy-proxy.md) heeft onder `/legacy/` een directe-linkversie op Pages; voor de echte leesproxy is Node-hosting nodig. [Chatvalidatie](docs/chat-validation.md) onderscheidt echte inferentie, gecontroleerde UI-fixtures en live publicatie.
+
+## Node- en Docker-deployment
 
 ```sh
-docker build -t flowproxy .
-docker run --rm -p 3000:3000 flowproxy
+docker build -t flowchat .
+docker run --rm -p 3000:3000 flowchat
 ```
 
-The multi-stage container runs as a non-root user and includes a health check. Alternatively use any Node host with build command `npm ci && npm run build` and start command `npm start`. Put it behind a TLS reverse proxy, preserve the response security headers, and use network-level public-egress restrictions. `/api/health` is the readiness endpoint. Set `PORT`/`HOST` using the host's environment settings; the example file documents options and need not be copied. No production credentials are required. This is a controlled reading service, not an unrestricted public open proxy.
+Of gebruik buildcommand `npm run install:deps && npm run build` en startcommand `npm start`. Docker draait als niet-rootgebruiker. De chat gebruikt geen servergeheimen. De legacy-proxy bewaart zijn domeinbeleid, DNS/IP-controle en beperkingen; zie de aparte documentatie.
 
-App code is MIT licensed. Open-source dependencies retain their own licenses; brand icons from Simple Icons identify their respective services and do not imply endorsement.
+Appcode is MIT. Transformers.js, het Qwen-model en de overige open-source dependencies behouden hun eigen licenties. Modelrevision: `22942cb7d7ba4cc81bb4673549ca4d4614469b5e`.

@@ -15,11 +15,19 @@ export function createApp(engine: Engine = createEngine()) {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+          workerSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", "data:"],
           fontSrc: ["'self'"],
-          connectSrc: ["'self'"],
+          connectSrc: [
+            "'self'",
+            "https://huggingface.co",
+            "https://us.aws.cdn.hf.co",
+            "https://cdn-lfs.huggingface.co",
+            "https://cdn-lfs-us-1.hf.co",
+            "https://cas-bridge.xethub.hf.co",
+          ],
           frameSrc: ["'none'"],
           objectSrc: ["'none'"],
           baseUri: ["'none'"],
@@ -54,12 +62,10 @@ export function createApp(engine: Engine = createEngine()) {
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
     if (!["GET", "HEAD"].includes(req.method)) {
-      res
-        .status(405)
-        .json({
-          error:
-            "This is a read-only proxy. Forms and uploads use direct access.",
-        });
+      res.status(405).json({
+        error:
+          "This is a read-only proxy. Forms and uploads use direct access.",
+      });
       return;
     }
     if (req.originalUrl.length > 4096) {
@@ -105,6 +111,17 @@ export function createApp(engine: Engine = createEngine()) {
     app.get(["/", "/browse", "/settings", "/favorites", "/recent"], (_, res) =>
       res.sendFile(resolve(client, "index.html")),
     );
+    app.get(
+      [
+        "/legacy",
+        "/legacy/",
+        "/legacy/browse",
+        "/legacy/settings",
+        "/legacy/favorites",
+        "/legacy/recent",
+      ],
+      (_, res) => res.sendFile(resolve(client, "legacy/index.html")),
+    );
   }
   app.use(
     (
@@ -113,14 +130,12 @@ export function createApp(engine: Engine = createEngine()) {
       res: express.Response,
       _next: express.NextFunction,
     ) => {
-      res
-        .status(error instanceof ProxyError ? error.status : 502)
-        .json({
-          error:
-            error instanceof ProxyError
-              ? error.message
-              : "The website could not be loaded safely. Try direct access.",
-        });
+      res.status(error instanceof ProxyError ? error.status : 502).json({
+        error:
+          error instanceof ProxyError
+            ? error.message
+            : "The website could not be loaded safely. Try direct access.",
+      });
     },
   );
   return app;

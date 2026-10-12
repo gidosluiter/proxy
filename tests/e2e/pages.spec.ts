@@ -6,7 +6,7 @@ test("Pages assets, hash navigation and preferences survive reload", async ({
   page.on("request", (r) => {
     if (new URL(r.url()).pathname.includes("/api/")) api.push(r.url());
   });
-  await page.goto("./");
+  await page.goto("./legacy/");
   await expect(
     page.getByRole("heading", { name: "Your internet. In flow." }),
   ).toBeVisible();
@@ -21,7 +21,7 @@ test("Pages assets, hash navigation and preferences survive reload", async ({
   if (test.info().project.name === "mobile")
     await page.getByRole("button", { name: "Toggle navigation" }).click();
   await page.getByRole("link", { name: "Settings", exact: true }).click();
-  await expect(page).toHaveURL(/\/proxy\/#\/settings$/);
+  await expect(page).toHaveURL(/\/proxy\/legacy\/#\/settings$/);
   await page.reload();
   await expect(
     page.getByRole("heading", { name: "Your flow, your way." }),
@@ -46,7 +46,7 @@ test("Pages shortcuts and search use real direct destinations", async ({
       body: "<h1>Direct destination</h1>",
     }),
   );
-  await page.goto("./");
+  await page.goto("./legacy/");
   await page
     .getByRole("combobox", { name: "Enter a URL or search" })
     .fill("example.com");
@@ -79,7 +79,7 @@ test("Pages shortcuts and search use real direct destinations", async ({
 test("Pages explains backend limits in dialogs, settings and browser deep links", async ({
   page,
 }) => {
-  await page.goto("./");
+  await page.goto("./legacy/");
   await page.getByRole("button", { name: "Add shortcut", exact: true }).click();
   await expect(
     page.getByText("Approved public domains use the proxy.", { exact: false }),
@@ -87,7 +87,7 @@ test("Pages explains backend limits in dialogs, settings and browser deep links"
   await expect(
     page.getByText("Websites open directly on GitHub Pages.", { exact: true }),
   ).toBeVisible();
-  await page.goto("./#/settings");
+  await page.goto("./legacy/#/settings");
   await expect(
     page.getByText("GitHub Pages edition:", { exact: false }),
   ).toBeVisible();
@@ -95,7 +95,7 @@ test("Pages explains backend limits in dialogs, settings and browser deep links"
     page.getByText("In the full Node deployment", { exact: false }),
   ).toBeVisible();
   await page.goto(
-    "./#/browse?url=" + encodeURIComponent("https://example.com/"),
+    "./legacy/#/browse?url=" + encodeURIComponent("https://example.com/"),
   );
   await expect(
     page.getByRole("link", { name: "Open website directly", exact: true }),
