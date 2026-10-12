@@ -1,5 +1,6 @@
 node_modules/
 public/runtime/
+public/third-party-licenses.txt
 dist/
 .env
 .env.*
