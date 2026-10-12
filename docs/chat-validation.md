@@ -43,4 +43,6 @@ Independent review reproduced cross-tab conversation deletion, legacy nested rou
 
 ## Publication
 
+GitHub Push Protection rejected an attempted compiled-site push as a Mistral key. Every 32-character candidate on the indicated minified line was traced to the public Transformers.js package: model class identifiers and an informational public GitHub Gist URL. No API key is used or injected by this app. Readable bundles separate those unrelated contexts; secret scanning remains enabled and no exemption is requested.
+
 The repository owner made `gidosluiter/proxy` public. At the latest pre-push check, Pages was not enabled (`GET /pages`: 404). Pages activation by Codex returned 403 with required permissions `pages=write,administration=write`. The workflow is committed; publication is verified separately after push. A successful local or CI build does not establish that the public site is live.

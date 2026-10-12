@@ -24,6 +24,9 @@ export default defineConfig({
   ],
   server: { port: 5173, proxy: { "/api": "http://127.0.0.1:3000" } },
   build: {
+    // Readable bundles keep upstream public Gist IDs out of minified
+    // lines containing model names that trigger GitHub key-pattern false positives.
+    minify: false,
     outDir: "dist/client",
     rollupOptions: {
       input: {
